@@ -1,4 +1,4 @@
-# 📦 JarStore — Software Repository
+# JarStore — Software Repository
 
 Piattaforma per caricare, scaricare e gestire programmi Java `.jar`.
 Login con **GitHub OAuth**, admin riservato a `CosmoUniverso`.
@@ -17,7 +17,7 @@ Login con **GitHub OAuth**, admin riservato a `CosmoUniverso`.
 
 ---
 
-## ⚙️ Setup
+## Setup
 
 ### 1. Crea una GitHub OAuth App
 
@@ -91,7 +91,7 @@ Apri il browser su → **http://localhost:5173**
 
 ---
 
-## 🔐 Permessi
+## Permessi
 
 | Azione                        | Utente | Admin (`CosmoUniverso`) |
 |-------------------------------|--------|--------------------------|
@@ -104,7 +104,7 @@ Apri il browser su → **http://localhost:5173**
 
 ---
 
-## 📁 Struttura progetto
+## Struttura progetto
 
 ```
 jarstore/
@@ -139,7 +139,7 @@ jarstore/
 
 ---
 
-## 🚀 Deploy in produzione
+## Deploy in produzione
 
 Per il deploy, aggiorna queste variabili in `.env`:
 
@@ -152,7 +152,7 @@ E aggiorna anche l'**Authorization callback URL** nella tua GitHub OAuth App.
 
 ---
 
-## 📝 Note
+## Note
 
 - Il database SQLite viene creato automaticamente al primo avvio in `backend/jarstore.db`
 - I file `.jar` caricati vengono salvati in `backend/uploads/`
