@@ -207,6 +207,16 @@ export default function Admin() {
                         <StarOff size={14}/>Rimuovi verifica
                       </button>
                     )}
+                    {user.github_username === 'CosmoUniverso' && !u.is_admin && (
+                      <button className="btn btn-ghost btn-sm" style={{color:'var(--accent)',borderColor:'rgba(0,210,255,0.3)'}} onClick={()=>{if(confirm('Promuovere @'+u.github_username+' ad admin?')) userAction(u.id,'makeadmin')}}>
+                        <Shield size={14}/>Promuovi admin
+                      </button>
+                    )}
+                    {user.github_username === 'CosmoUniverso' && u.is_admin && (
+                      <button className="btn btn-ghost btn-sm" style={{color:'var(--danger)',borderColor:'rgba(248,81,73,0.3)'}} onClick={()=>{if(confirm('Rimuovere admin a @'+u.github_username+'?')) userAction(u.id,'removeadmin')}}>
+                        <Shield size={14}/>Rimuovi admin
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
