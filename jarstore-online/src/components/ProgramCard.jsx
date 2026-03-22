@@ -32,7 +32,7 @@ export function ProgramCard({ program, onDownload, onDelete, onUpdate }) {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const { url } = await apiFetch(`/api/programs/download?id=${program.id}`);
+      const { url } = await apiFetch(`/api/programs/manage?id=${program.id}`);
       const a = document.createElement('a');
       a.href = url; a.download = program.original_name; a.click();
       onDownload?.();

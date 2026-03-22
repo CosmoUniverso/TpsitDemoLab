@@ -43,7 +43,7 @@ export default function Admin() {
 
   const fetchStats = useCallback(async () => {
     setFetching(true);
-    try { setStats(await apiFetch('/api/admin/stats')); }
+    try { setStats(await apiFetch('/api/admin/data?type=stats')); }
     catch(e) { toast.error(e.message); }
     finally { setFetching(false); }
   }, []);
@@ -57,7 +57,7 @@ export default function Admin() {
 
   const reviewProgram = async (id, action) => {
     try {
-      await apiFetch('/api/admin/review', { method:'POST', body:JSON.stringify({ id, action, note:noteMap[id]||'' }) });
+      await apiFetch('/api/admin/queue', { method:'POST', body:JSON.stringify({ id, action, note:noteMap[id]||'' }) });
       toast.success(action==='approve' ? '✅ Approvato!' : '❌ Rifiutato');
       setQueue(q => ({ ...q, programs: q.programs.filter(p=>p.id!==id) }));
     } catch(e) { toast.error(e.message); }
@@ -74,7 +74,7 @@ export default function Admin() {
 
   const fetchLog = useCallback(async () => {
     setFetching(true);
-    try { setLog(await apiFetch('/api/admin/log')); }
+    try { setLog(await apiFetch('/api/admin/data?type=log')); }
     catch(e) { toast.error(e.message); }
     finally { setFetching(false); }
   }, []);

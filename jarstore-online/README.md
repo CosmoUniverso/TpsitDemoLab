@@ -1,139 +1,138 @@
-# 📦 JarStore Online
+# 📦 JarStore
 
-Repository di programmi Java con login GitHub, revisione admin, anti-spam.
+> Repository online di programmi Java con sistema di ruoli, revisione admin e anti-spam.
 
-**Stack — 100% gratuito:**
-| Servizio  | Cosa fa                        | Piano gratuito |
-|-----------|-------------------------------|----------------|
-| Vercel    | Hosting frontend + API        | ∞ deploy       |
-| Supabase  | PostgreSQL + Storage .jar     | 500MB DB, 1GB Storage |
+**Live:** [tpsit-demo-lab.vercel.app](https://tpsit-demo-lab.vercel.app)  
+**Repo:** [github.com/CosmoUniverso/TpsitDemoLab](https://github.com/CosmoUniverso/TpsitDemoLab)
 
 ---
 
-## 🚀 Setup (15 minuti)
+## ✨ Funzionalità
+
+- 🔐 **Login con GitHub OAuth**
+- 📤 **Carica programmi `.jar`** — messi in coda per revisione admin
+- ✅ **Admin panel** — approva/rifiuta programmi e nuovi utenti
+- 🛡️ **Anti-spam** basato su GitHub (non sull'IP, non aggirabile con VPN):
+  - Account GitHub deve avere ≥ 5 giorni
+  - Almeno 1 repository pubblico
+  - Max 1 progetto in attesa di revisione alla volta
+- 📊 **Monitor storage** con avviso automatico al raggiungimento dei limiti
+- 📱 **Responsive** — ottimizzato per mobile e desktop
+
+---
+
+## 👥 Sistema ruoli
+
+| Ruolo | Come si ottiene | Progetti approvati | In attesa |
+|---|---|---|---|
+| `pending` | Al primo login | 0 | — |
+| `active` | Approvato dall'admin | max 2 | max 1 |
+| `whitelisted` | Promosso dall'admin | max 5 | illimitati |
+| `admin` | Promosso dal superadmin | illimitati | illimitati |
+| `superadmin` | CosmoUniverso (fisso) | illimitati | illimitati |
+| `banned` | Bannato dall'admin | 0 | — |
+
+> I nuovi account ricevono un popup di benvenuto che spiega che devono attendere l'approvazione admin prima di poter caricare.
+
+---
+
+## 🔒 Limiti e sicurezza
+
+- **Max 40 utenti** totali (esclusi i bannati)
+- **Storage:** blocco automatico con margine di sicurezza a 850MB su 1GB gratuito
+- **Superadmin** (`CosmoUniverso`) non può essere modificato, degradato o bannato da nessuno
+- Solo il superadmin può promuovere/degradare altri admin
+
+---
+
+## 🏗️ Stack — 100% gratuito
+
+| Servizio | Cosa fa | Limite piano free |
+|---|---|---|
+| Vercel | Frontend + API serverless | Illimitato |
+| Supabase | PostgreSQL + Storage .jar | 500MB DB · 1GB Storage |
+| GitHub OAuth | Autenticazione | Illimitato |
+
+**Costo totale: 0€**
+
+---
+
+## 🚀 Setup
 
 ### 1. Supabase
-
-1. Crea account su **supabase.com** → New project
-2. **SQL Editor** → incolla tutto il contenuto di `supabase-schema.sql` → Run
-3. **Storage** → New bucket → Nome: `jars` → NON spuntare "Public"
-4. **Storage → Policies** → aggiungi policy per il bucket `jars`:
-
-```sql
--- Permette upload autenticati (service_role bypassa le policies)
--- Le policies servono solo per l'anon key usata dal frontend
--- Poiché usiamo presigned URL con service_role, non servono policies extra
-```
-
-5. **Settings → API** → copia:
-   - `URL` → `SUPABASE_URL` e `VITE_SUPABASE_URL`
-   - `anon public` key → `VITE_SUPABASE_ANON_KEY`
-   - `service_role` key → `SUPABASE_SERVICE_KEY`
-
----
+1. Crea progetto su **supabase.com**
+2. **SQL Editor** → incolla `supabase-schema.sql` → Run
+3. **Storage** → New bucket → nome `jars` → NON spuntare Public
+4. Copia URL, `anon key` e `service_role key`
 
 ### 2. GitHub OAuth App
-
 1. **github.com/settings/developers** → New OAuth App
-2. Compila:
-   - Homepage URL: `https://tuo-progetto.vercel.app`
-   - Callback URL: `https://tuo-progetto.vercel.app/api/auth/callback`
-3. Copia **Client ID** e **Client Secret**
+2. Homepage URL: `https://tpsit-demo-lab.vercel.app`
+3. Callback URL: `https://tpsit-demo-lab.vercel.app/api/auth/callback`
+4. Copia Client ID e Client Secret
 
----
-
-### 3. Deploy su Vercel
-
+### 3. Vercel
 ```bash
-# Installa Vercel CLI
 npm i -g vercel
-
-# Entra nella cartella del progetto
 cd jarstore-online
-
-# Deploy
 vercel
+```
 
-# Imposta le variabili d'ambiente su Vercel Dashboard → Settings → Environment Variables:
-GITHUB_CLIENT_ID=...
-GITHUB_CLIENT_SECRET=...
+Variabili d'ambiente da impostare su Vercel:
+
+```env
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
 JWT_SECRET=stringa_random_32_caratteri
 SUPABASE_URL=https://xxxx.supabase.co
 SUPABASE_SERVICE_KEY=eyJ...
-APP_URL=https://tuo-progetto.vercel.app
+APP_URL=https://tpsit-demo-lab.vercel.app
 VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_APP_URL=https://tuo-progetto.vercel.app
-
-# Rideploy per applicare le variabili
-vercel --prod
+VITE_APP_URL=https://tpsit-demo-lab.vercel.app
 ```
 
 ---
 
-### 4. Aggiorna GitHub OAuth App
-
-Vai su **github.com/settings/developers** → la tua app → aggiorna:
-- **Authorization callback URL**: `https://tuo-progetto.vercel.app/api/auth/callback`
-
----
-
-## 🛡️ Anti-spam
-
-Il sistema blocca lo spam basandosi su GitHub (non sull'IP, aggirabile con VPN):
-
-| Check                       | Valore         |
-|-----------------------------|----------------|
-| Età account GitHub          | ≥ 5 giorni     |
-| Repository pubblici         | ≥ 1            |
-| Max submission / 24h        | 2              |
-| Max submission in pending   | 2              |
-| Utenti in whitelist         | nessun limite  |
-
----
-
-## 🔐 Permessi
-
-| Azione                   | Utente | Verificato | Admin |
-|--------------------------|--------|------------|-------|
-| Vedere programmi         | ✅     | ✅         | ✅    |
-| Scaricare .jar           | ✅     | ✅         | ✅    |
-| Caricare programmi       | ✅*    | ✅         | ✅    |
-| Revisione submission     | ❌     | ❌         | ✅    |
-| Ban / whitelist utenti   | ❌     | ❌         | ✅    |
-| Statistiche              | ❌     | ❌         | ✅    |
-
-*Con limiti anti-spam
-
----
-
-## 📁 Struttura
+## 📁 Struttura progetto
 
 ```
 jarstore-online/
 ├── api/
-│   ├── _utils.js            ← helpers condivisi
-│   ├── me.js                ← GET /api/me
-│   ├── upload-url.js        ← POST presigned URL per upload diretto
+│   ├── _utils.js              ← helpers condivisi
+│   ├── me.js                  ← GET profilo utente
+│   ├── upload-url.js          ← POST presigned URL upload
 │   ├── auth/
-│   │   ├── github.js        ← redirect GitHub OAuth
-│   │   └── callback.js      ← callback OAuth → JWT
+│   │   ├── github.js          ← redirect OAuth
+│   │   └── callback.js        ← callback → JWT + limite utenti
 │   ├── programs/
-│   │   ├── index.js         ← GET programmi approvati
-│   │   ├── submit.js        ← POST nuova submission
-│   │   └── download.js      ← GET URL firmato download
+│   │   ├── index.js           ← GET programmi approvati
+│   │   ├── submit.js          ← POST submission con tutti i controlli
+│   │   └── download.js        ← GET URL firmato download
 │   └── admin/
-│       ├── queue.js         ← GET submission in attesa
-│       ├── review.js        ← POST approva/rifiuta
-│       ├── users.js         ← GET/PATCH gestione utenti
-│       └── stats.js         ← GET statistiche
+│       ├── queue.js           ← GET coda programmi + utenti pending
+│       ├── review.js          ← POST approva/rifiuta programma
+│       ├── users.js           ← GET/PATCH gestione utenti
+│       ├── stats.js           ← GET statistiche + storage
+│       └── contributors.js   ← GET lista admin pubblica
 └── src/
     ├── pages/
-    │   ├── Login.jsx
-    │   ├── Home.jsx
-    │   ├── Submit.jsx       ← upload diretto a Supabase
-    │   ├── Admin.jsx        ← coda + utenti + stats
-    │   ├── Contributors.jsx
+    │   ├── Login.jsx          ← login con messaggi errore dettagliati
+    │   ├── Home.jsx           ← lista programmi + popup benvenuto
+    │   ├── Submit.jsx         ← upload diretto a Supabase + campo collaboratori
+    │   ├── Admin.jsx          ← coda unificata + utenti + stats storage
+    │   ├── Contributors.jsx   ← contributori + admin live da DB
     │   └── AuthCallback.jsx
-    └── ...
+    └── components/
+        ├── Navbar.jsx         ← responsive mobile
+        └── ProgramCard.jsx    ← mostra uploader e collaboratori
 ```
+
+---
+
+## 👥 Contributori
+
+| | Username | Ruolo |
+|---|---|---|
+| <img src="https://github.com/CosmoUniverso.png" width="20"/> | [@CosmoUniverso](https://github.com/CosmoUniverso) | Lead Developer & Superadmin |
+| <img src="https://github.com/gabrielerada07.png" width="20"/> | [@gabrielerada07](https://github.com/gabrielerada07) | Collaboratore |

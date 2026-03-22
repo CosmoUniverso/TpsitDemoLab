@@ -20,7 +20,7 @@ export default function Contributors() {
   const [admins, setAdmins] = useState([]);
 
   useEffect(() => {
-    apiFetch('/api/admin/contributors').then(setAdmins).catch(()=>{});
+    apiFetch('/api/admin/data?type=contributors').then(setAdmins).catch(()=>{});
   }, []);
 
   return (
