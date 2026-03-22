@@ -41,7 +41,7 @@ export default function App() {
       <AuthProvider>
         <AppRoutes/>
       </AuthProvider>
-      <Analytics />
+    <Analytics />
     </BrowserRouter>
   );
 }
