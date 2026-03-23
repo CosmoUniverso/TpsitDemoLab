@@ -1,14 +1,14 @@
-const { getSupabase, verifyToken, setCors, ok, err, canViewAdmin } = require('../_utils');
+const { getSupabase, getUserFromToken, setCors, ok, err, canViewAdmin } = require('../_utils');
 
 module.exports = async (req, res) => {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const user = verifyToken(req);
+  const user = await getUserFromToken(req);
   const type = req.query.type || 'stats';
 
   // contributors è pubblico
-  if (type !== 'contributors' && !canViewAdmin(user?.user_status)) {
+  if (type !== 'contributors' && (!user || !canViewAdmin(user.user_status))) {
     return err(res, 'Accesso negato', 403);
   }
 

@@ -1,11 +1,12 @@
-const { getSupabase, verifyToken, setCors, ok, err, isAdmin, canViewAdmin, SUPERADMIN } = require('../_utils');
+const { getSupabase, getUserFromToken, setCors, ok, err, isAdmin, canViewAdmin, SUPERADMIN } = require('../_utils');
 
 module.exports = async (req, res) => {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const user = verifyToken(req);
-  if (!canViewAdmin(user?.user_status)) return err(res, 'Accesso negato', 403);
+  const user = await getUserFromToken(req);
+  if (!user) return err(res, 'Non autenticato', 401);
+  if (!canViewAdmin(user.user_status)) return err(res, 'Accesso negato', 403);
 
   const sb = getSupabase();
 
@@ -32,10 +33,10 @@ module.exports = async (req, res) => {
     if (target.github_username === SUPERADMIN) return err(res, 'Il superadmin non può essere modificato', 403);
     if (Number(id) === Number(user.id))        return err(res, 'Non puoi modificare te stesso', 400);
 
-    // Solo superadmin può gestire admin e teacher
+    // Tutti gli admin possono gestire i ruoli (teacher non può)
     const privilegedActions = ['makeadmin','removeadmin','maketeacher','removeteacher'];
-    if (privilegedActions.includes(action) && user.github_username !== SUPERADMIN) {
-      return err(res, 'Solo CosmoUniverso può gestire admin e teacher', 403);
+    if (privilegedActions.includes(action) && !isAdmin(user.user_status)) {
+      return err(res, 'Solo admin possono gestire admin e teacher', 403);
     }
 
     let update = {};

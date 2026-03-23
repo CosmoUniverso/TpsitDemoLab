@@ -1,11 +1,12 @@
-const { getSupabase, verifyToken, setCors, ok, err, isAdmin, isTeacher, canViewAdmin, BUCKET } = require('../_utils');
+const { getSupabase, getUserFromToken, setCors, ok, err, isAdmin, isTeacher, canViewAdmin, BUCKET } = require('../_utils');
 
 module.exports = async (req, res) => {
   setCors(res);
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  const user = verifyToken(req);
-  if (!canViewAdmin(user?.user_status)) return err(res, 'Accesso negato', 403);
+  const user = await getUserFromToken(req);
+  if (!user) return err(res, 'Non autenticato', 401);
+  if (!canViewAdmin(user.user_status)) return err(res, 'Accesso negato', 403);
 
   const sb = getSupabase();
 

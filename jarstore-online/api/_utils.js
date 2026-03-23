@@ -57,8 +57,22 @@ async function checkStorageLimit(sb) {
   } catch { return false; }
 }
 
+async function getUserFromToken(req) {
+  const tokenUser = verifyToken(req);
+  if (!tokenUser) return null;
+  const sb = getSupabase();
+  const { data: user, error } = await sb
+    .from('users')
+    .select('id,github_username,email,avatar_url,user_status,ban_reason,is_contributor')
+    .eq('id', tokenUser.id)
+    .single();
+  if (error || !user) return null;
+  return user;
+}
+
 module.exports = {
   getSupabase, verifyToken, signToken, setCors, ok, err,
   SUPERADMIN, BUCKET, MAX_USERS,
   isAdmin, isTeacher, canViewAdmin, canUpload, maxProjects, checkStorageLimit,
+  getUserFromToken,
 };

@@ -224,22 +224,22 @@ export default function Admin() {
                         </>}
                         {u.user_status==='active' && <>
                           <button className="btn btn-ghost btn-sm" style={{color:'var(--success)',borderColor:'rgba(63,185,80,0.3)'}} onClick={()=>userAction(u.id,'whitelist')}><Star size={13}/>Verifica</button>
-                          {user.user_status==='superadmin' && <button className="btn btn-ghost btn-sm" style={{color:'var(--accent)',borderColor:'rgba(0,210,255,0.3)'}} onClick={()=>{if(confirm('Promuovi ad admin?')) userAction(u.id,'makeadmin')}}><Shield size={13}/>Admin</button>}
+                          {isFullAdmin && <button className="btn btn-ghost btn-sm" style={{color:'var(--accent)',borderColor:'rgba(0,210,255,0.3)'}} onClick={()=>{if(confirm('Promuovi ad admin?')) userAction(u.id,'makeadmin')}}><Shield size={13}/>Admin</button>}
                           <BanBtn u={u} onBan={r=>userAction(u.id,'ban',r)}/>
                         </>}
                         {u.user_status==='whitelisted' && isFullAdmin && <>
                           <button className="btn btn-ghost btn-sm" onClick={()=>userAction(u.id,'unwhitelist')}><StarOff size={13}/>Rimuovi verifica</button>
-                          {user.user_status==='superadmin' && <button className="btn btn-ghost btn-sm" style={{color:'var(--accent)',borderColor:'rgba(0,210,255,0.3)'}} onClick={()=>{if(confirm('Promuovi ad admin?')) userAction(u.id,'makeadmin')}}><Shield size={13}/>Admin</button>}
+                          {isFullAdmin && <button className="btn btn-ghost btn-sm" style={{color:'var(--accent)',borderColor:'rgba(0,210,255,0.3)'}} onClick={()=>{if(confirm('Promuovi ad admin?')) userAction(u.id,'makeadmin')}}><Shield size={13}/>Admin</button>}
                           <BanBtn u={u} onBan={r=>userAction(u.id,'ban',r)}/>
                         </>}
-                        {u.user_status==='admin' && user.user_status==='superadmin' && <>
+                        {u.user_status==='admin' && isFullAdmin && <>
                           <button className="btn btn-ghost btn-sm" onClick={()=>{if(confirm('Rimuovi admin?')) userAction(u.id,'removeadmin')}}><Shield size={13}/>Rimuovi admin</button>
                           <BanBtn u={u} onBan={r=>userAction(u.id,'ban',r)}/>
                         </>}
-                        {user.user_status==='superadmin' && u.user_status==='active' && (
+                        {isFullAdmin && u.user_status==='active' && (
                           <button className="btn btn-ghost btn-sm" style={{color:'var(--warning)',borderColor:'rgba(210,153,34,0.3)'}} onClick={()=>{if(confirm('Imposta come teacher?')) userAction(u.id,'maketeacher')}}><Shield size={13}/>Teacher</button>
                         )}
-                        {user.user_status==='superadmin' && u.user_status==='teacher' && (
+                        {isFullAdmin && u.user_status==='teacher' && (
                           <button className="btn btn-ghost btn-sm" onClick={()=>userAction(u.id,'removeteacher')}><Shield size={13}/>Rimuovi teacher</button>
                         )}
                         {isFullAdmin && (
