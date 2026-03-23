@@ -13,7 +13,7 @@ function Protected({ children, adminOnly = false }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace/>;
-  if (adminOnly && !['admin','superadmin'].includes(user.user_status)) return <Navigate to="/" replace/>;
+  if (adminOnly && !['admin','superadmin','teacher'].includes(user.user_status)) return <Navigate to="/" replace/>;
   return children;
 }
 

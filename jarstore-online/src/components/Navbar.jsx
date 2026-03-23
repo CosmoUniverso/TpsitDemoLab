@@ -6,7 +6,7 @@ export function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const isAdmin = ['admin','superadmin'].includes(user?.user_status);
+  const isAdmin = ['admin','superadmin','teacher'].includes(user?.user_status);
   const active = (p) => ({ ...S.link, ...(pathname === p ? S.linkOn : {}) });
   const sl = user ? STATUS_LABELS[user.user_status] : null;
 
@@ -19,7 +19,7 @@ export function Navbar() {
         </Link>
         <div style={S.links} className="nav-links">
           {user && <Link to="/"             style={active('/')}            ><Home   size={15}/>Programmi</Link>}
-          {user && ['active','whitelisted','admin','superadmin'].includes(user.user_status) &&
+          {user && ['active','whitelisted','admin','superadmin','teacher'].includes(user.user_status) &&
                    <Link to="/submit"       style={active('/submit')}      ><Upload size={15}/>Carica</Link>}
           {user && <Link to="/contributors" style={active('/contributors')}><Users  size={15}/>Credits</Link>}
           {isAdmin && <Link to="/admin"     style={active('/admin')}       ><Shield size={15}/>Admin</Link>}

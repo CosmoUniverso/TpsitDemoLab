@@ -31,20 +31,18 @@ module.exports = async (req, res) => {
       ghGet('https://api.github.com/user/emails', at).catch(() => []),
     ]);
     const email = (Array.isArray(emails) ? emails.find(e => e.primary)?.email : null) || gu.email || null;
-
     const sb = getSupabase();
 
-    // Controlla se utente esiste già
+    // Controlla se esiste già
     const { data: existing } = await sb
       .from('users')
-      .select('id,user_status,is_new')
+      .select('id,user_status')
       .eq('github_id', String(gu.id))
       .single();
 
     const isNew = !existing;
 
     if (isNew) {
-      // Nuovo utente: controlla limite 40
       const { count } = await sb
         .from('users')
         .select('*', { count: 'exact', head: true })
@@ -52,52 +50,46 @@ module.exports = async (req, res) => {
       if (count >= MAX_USERS) return res.redirect(`${APP}/login?error=full`);
     }
 
-    // Status: superadmin è fisso, altrimenti preserva quello esistente, per i nuovi usa 'pending'
+    // Superadmin è fisso, altrimenti preserva lo status esistente
     const isSuperadmin = gu.login === SUPERADMIN;
     const user_status  = isSuperadmin ? 'superadmin' : (existing?.user_status || 'pending');
 
-    // Se bannato non fa accedere
     if (user_status === 'banned') return res.redirect(`${APP}/login?error=banned`);
 
-    // Upsert: aggiorna solo i campi GitHub (NON tocca user_status per gli utenti esistenti)
     if (isNew) {
-      // Inserimento nuovo utente
       await sb.from('users').insert({
         github_id:           String(gu.id),
         github_username:     gu.login,
-        email,
-        avatar_url:          gu.avatar_url,
+        email, avatar_url:   gu.avatar_url,
         user_status,
         github_created_at:   gu.created_at,
         github_public_repos: gu.public_repos || 0,
       });
     } else {
-      // Aggiorna solo i dati GitHub, preserva user_status e tutto il resto
+      // Aggiorna solo dati GitHub, MAI user_status
       await sb.from('users').update({
         github_username:     gu.login,
-        email,
-        avatar_url:          gu.avatar_url,
+        email, avatar_url:   gu.avatar_url,
         github_public_repos: gu.public_repos || 0,
-        // user_status NON viene toccato
       }).eq('github_id', String(gu.id));
     }
 
-    // Ricarica utente aggiornato
     const { data: user } = await sb
       .from('users')
-      .select('id,github_username,email,avatar_url,user_status')
+      .select('id,github_username,email,avatar_url,user_status,is_contributor')
       .eq('github_id', String(gu.id))
       .single();
 
-    if (!user) throw new Error('Utente non trovato dopo upsert');
+    if (!user) throw new Error('Utente non trovato');
     if (user.user_status === 'banned') return res.redirect(`${APP}/login?error=banned`);
 
     const token = signToken({
-      id:          user.id,
-      github_username: user.github_username,
-      email:       user.email,
-      avatar_url:  user.avatar_url,
-      user_status: user.user_status,
+      id:             user.id,
+      github_username:user.github_username,
+      email:          user.email,
+      avatar_url:     user.avatar_url,
+      user_status:    user.user_status,
+      is_contributor: user.is_contributor,
     });
 
     res.redirect(`${APP}/auth/callback?token=${token}${isNew ? '&welcome=1' : ''}`);

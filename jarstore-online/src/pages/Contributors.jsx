@@ -2,26 +2,29 @@ import { useState, useEffect } from 'react';
 import { Github, Code2, Cpu } from 'lucide-react';
 import { apiFetch, STATUS_LABELS } from '../hooks/useAuth.jsx';
 
-const HARDCODED = [
-  { username:'CosmoUniverso', name:'Cosmo',    role:'Lead Developer & Superadmin', contributions:['Backend','Auth','Deploy','DB'] },
-  { username:'gabrielerada07', name:'Gabriele', role:'Collaboratore',               contributions:['Frontend','UI/UX','Testing'] },
+const HARDCODED_CONTRIBUTORS = [
+  { username:'CosmoUniverso', name:'Cosmo',    role:'Lead Developer & Admin', contributions:['Backend','Auth','Deploy','DB'] },
+  { username:'gabrielerada07', name:'Gabriele', role:'Collaboratore',          contributions:['Frontend','UI/UX','Testing'] },
 ];
 
 const TECH = [
-  { name:'React 18',    desc:'Frontend',         color:'#61dafb' },
-  { name:'Vite',        desc:'Build tool',        color:'#fbbf24' },
-  { name:'Vercel',      desc:'Hosting/Serverless',color:'#fff' },
-  { name:'Supabase',    desc:'DB & Storage',      color:'#3ecf8e' },
-  { name:'GitHub OAuth',desc:'Autenticazione',    color:'var(--accent)' },
-  { name:'JWT',         desc:'Sessioni',          color:'#e879f9' },
+  { name:'React 18',     desc:'Frontend',          color:'#61dafb' },
+  { name:'Vite',         desc:'Build tool',         color:'#fbbf24' },
+  { name:'Vercel',       desc:'Hosting/Serverless', color:'#fff' },
+  { name:'Supabase',     desc:'DB & Storage',       color:'#3ecf8e' },
+  { name:'GitHub OAuth', desc:'Autenticazione',     color:'var(--accent)' },
+  { name:'JWT',          desc:'Sessioni',           color:'#e879f9' },
 ];
 
 export default function Contributors() {
-  const [admins, setAdmins] = useState([]);
+  const [data, setData] = useState({ admins:[], contributors:[] });
 
   useEffect(() => {
-    apiFetch('/api/admin/data?type=contributors').then(setAdmins).catch(()=>{});
+    apiFetch('/api/admin/data?type=contributors').then(setData).catch(()=>{});
   }, []);
+
+  const allAdmins = data.admins || [];
+  const extraContributors = data.contributors || [];
 
   return (
     <div className="page">
@@ -34,9 +37,9 @@ export default function Contributors() {
         </p>
       </div>
 
-      {/* Contributori hardcoded */}
-      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:14,marginBottom:40}} className="fade-up">
-        {HARDCODED.map(c=>(
+      {/* Contributori principali hardcoded */}
+      <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(260px,1fr))',gap:14,marginBottom:36}} className="fade-up">
+        {HARDCODED_CONTRIBUTORS.map(c=>(
           <div key={c.username} className="card" style={{padding:20}}>
             <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:14}}>
               <img src={`https://github.com/${c.username}.png?size=80`} alt={c.username}
@@ -59,18 +62,18 @@ export default function Contributors() {
       </div>
 
       {/* Admin dal DB */}
-      {admins.length > 0 && (
-        <div className="fade-up" style={{marginBottom:40}}>
-          <h2 style={{fontFamily:'var(--font-mono)',fontSize:14,display:'flex',alignItems:'center',gap:8,marginBottom:14,color:'var(--text-secondary)'}}>
-            Admin attivi
+      {allAdmins.length > 0 && (
+        <div className="fade-up" style={{marginBottom:32}}>
+          <h2 style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-secondary)',marginBottom:14,display:'flex',alignItems:'center',gap:8}}>
+            Staff attivo
           </h2>
-          <div style={{display:'flex',flexWrap:'wrap',gap:10}}>
-            {admins.map(a=>{
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+            {allAdmins.map(a=>{
               const sl = STATUS_LABELS[a.user_status]||{};
               return (
                 <a key={a.id} href={`https://github.com/${a.github_username}`} target="_blank" rel="noreferrer"
                   style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',textDecoration:'none',transition:'border-color var(--transition)'}}>
-                  <img src={a.avatar_url||'https://github.com/ghost.png'} style={{width:26,height:26,borderRadius:'50%'}} alt=""/>
+                  <img src={a.avatar_url||'https://github.com/ghost.png'} style={{width:24,height:24,borderRadius:'50%'}} alt=""/>
                   <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-primary)'}}>@{a.github_username}</span>
                   <span className={`badge ${sl.cls||'badge-gray'}`} style={{fontSize:9}}>{sl.label}</span>
                 </a>
@@ -80,10 +83,28 @@ export default function Contributors() {
         </div>
       )}
 
+      {/* Contributori aggiuntivi dal DB */}
+      {extraContributors.length > 0 && (
+        <div className="fade-up" style={{marginBottom:32}}>
+          <h2 style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-secondary)',marginBottom:14}}>
+            Hanno contribuito
+          </h2>
+          <div style={{display:'flex',flexWrap:'wrap',gap:8}}>
+            {extraContributors.map(u=>(
+              <a key={u.id} href={`https://github.com/${u.github_username}`} target="_blank" rel="noreferrer"
+                style={{display:'flex',alignItems:'center',gap:8,padding:'8px 12px',background:'var(--bg-surface)',border:'1px solid var(--border)',borderRadius:'var(--radius-md)',textDecoration:'none'}}>
+                <img src={u.avatar_url||'https://github.com/ghost.png'} style={{width:22,height:22,borderRadius:'50%'}} alt=""/>
+                <span style={{fontFamily:'var(--font-mono)',fontSize:12,color:'var(--text-primary)'}}>@{u.github_username}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Stack */}
       <div className="fade-up" style={{marginBottom:32}}>
-        <h2 style={{fontFamily:'var(--font-mono)',fontSize:14,display:'flex',alignItems:'center',gap:8,marginBottom:14,color:'var(--text-secondary)'}}>
-          <Code2 size={15} style={{color:'var(--accent)'}}/>Stack tecnologico
+        <h2 style={{fontFamily:'var(--font-mono)',fontSize:13,color:'var(--text-secondary)',display:'flex',alignItems:'center',gap:8,marginBottom:14}}>
+          <Code2 size={14} style={{color:'var(--accent)'}}/>Stack tecnologico
         </h2>
         <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fill,minmax(170px,1fr))',gap:8}}>
           {TECH.map(t=>(

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Download, Terminal, HardDrive, Calendar, Trash2, Edit2, X, Check } from 'lucide-react';
+import { Download, Terminal, HardDrive, Calendar, Trash2, Edit2, X, Check, RefreshCw } from 'lucide-react';
+import { useDropzone } from 'react-dropzone';
 import { apiFetch, useAuth } from '../hooks/useAuth.jsx';
 
 const fmtSize = b => b ? (b>=1048576 ? `${(b/1048576).toFixed(1)} MB` : `${(b/1024).toFixed(0)} KB`) : '—';
@@ -11,6 +12,8 @@ export function ProgramCard({ program, onDownload, onDelete, onUpdate }) {
   const [downloading, setDownloading] = useState(false);
   const [editing,     setEditing]     = useState(false);
   const [showDelConf, setShowDelConf] = useState(false);
+  const [newJar,      setNewJar]      = useState(null);
+  const [replacingJar,setReplacingJar]= useState(false);
   const [saving,      setSaving]      = useState(false);
 
   // Edit state
@@ -22,6 +25,32 @@ export function ProgramCard({ program, onDownload, onDelete, onUpdate }) {
 
   const tags       = program.tags ? program.tags.split(',').map(t=>t.trim()).filter(Boolean) : [];
   const contributors = program.contributors ? program.contributors.split(',').map(t=>t.trim()).filter(Boolean) : [];
+
+  const replaceJar = async () => {
+    if (!newJar) return;
+    setReplacingJar(true);
+    try {
+      const { uploadUrl, filePath } = await apiFetch('/api/upload-url', {
+        method:'POST', body: JSON.stringify({ filename: newJar.name }),
+      });
+      await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.addEventListener('load', () => xhr.status < 300 ? resolve() : reject(new Error('Upload fallito')));
+        xhr.addEventListener('error', () => reject(new Error('Errore di rete')));
+        xhr.open('PUT', uploadUrl);
+        xhr.setRequestHeader('Content-Type', 'application/java-archive');
+        xhr.send(newJar);
+      });
+      await apiFetch(`/api/programs/manage?id=${program.id}`, {
+        method:'PUT',
+        body: JSON.stringify({ newFilePath: filePath, newOriginalName: newJar.name, newFileSize: newJar.size }),
+      });
+      setNewJar(null);
+      setEditing(false);
+      onUpdate?.();
+    } catch(e) { alert('Errore: ' + e.message); }
+    finally { setReplacingJar(false); }
+  };
 
   const isAdmin   = ['admin','superadmin'].includes(user?.user_status);
   const isOwner   = user?.id === program.uploader_id;
@@ -77,6 +106,16 @@ export function ProgramCard({ program, onDownload, onDelete, onUpdate }) {
               <input className="input" style={{fontSize:13}} value={editTags} onChange={e=>setEditTags(e.target.value)} placeholder="Tag (virgola)"/>
             </div>
             <input className="input" style={{fontSize:13}} value={editContribs} onChange={e=>setEditContribs(e.target.value)} placeholder="Collaboratori (virgola)"/>
+            {/* Sostituisci JAR */}
+            <div style={{padding:'10px 12px',background:'var(--bg-elevated)',borderRadius:'var(--radius-sm)',border:'1px solid var(--border)'}}>
+              <p style={{fontSize:11,color:'var(--text-muted)',marginBottom:8,fontWeight:600,textTransform:'uppercase',letterSpacing:'.04em'}}>Sostituisci file .jar</p>
+              <JarDropzone file={newJar} onFile={setNewJar}/>
+              {newJar && (
+                <button className="btn btn-ghost btn-sm" style={{marginTop:8,color:'var(--success)',borderColor:'rgba(63,185,80,0.3)'}} onClick={replaceJar} disabled={replacingJar}>
+                  {replacingJar ? <span className="spinner" style={{width:13,height:13}}/> : <RefreshCw size={13}/>}Aggiorna JAR
+                </button>
+              )}
+            </div>
             <div style={{display:'flex',gap:8,justifyContent:'flex-end'}}>
               <button className="btn btn-ghost btn-sm" onClick={()=>setEditing(false)}><X size={13}/>Annulla</button>
               <button className="btn btn-primary btn-sm" onClick={handleSave} disabled={saving}>
@@ -171,6 +210,21 @@ export function ProgramCard({ program, onDownload, onDelete, onUpdate }) {
         </div>
       )}
     </>
+  );
+}
+
+function JarDropzone({ file, onFile }) {
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop: accepted => { if (accepted[0]) onFile(accepted[0]); },
+    accept: { 'application/java-archive':['.jar'], 'application/octet-stream':['.jar'] },
+    maxFiles:1, maxSize:100*1024*1024,
+    onDropRejected: () => alert('Solo .jar fino a 100MB'),
+  });
+  return (
+    <div {...getRootProps()} style={{border:'2px dashed',borderColor:isDragActive?'var(--accent)':file?'var(--success)':'var(--border)',borderRadius:'var(--radius-sm)',padding:'10px 14px',cursor:'pointer',fontSize:12,color:'var(--text-secondary)',textAlign:'center'}}>
+      <input {...getInputProps()}/>
+      {file ? <span style={{color:'var(--success)'}}>✓ {file.name}</span> : <span>{isDragActive?'Rilascia...':'Trascina o clicca per scegliere il nuovo .jar'}</span>}
+    </div>
   );
 }
 

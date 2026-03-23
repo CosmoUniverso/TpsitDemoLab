@@ -24,8 +24,9 @@ export default function Admin() {
   const [noteMap,  setNoteMap]  = useState({});
   const [log,      setLog]      = useState([]);
 
-  const isAdmin = ['admin','superadmin'].includes(user?.user_status);
-  useEffect(() => { if (!loading && !isAdmin) navigate('/'); }, [user, loading]);
+  const isFullAdmin = ['admin','superadmin'].includes(user?.user_status);
+  const isTeacher = user?.user_status === 'teacher';
+  useEffect(() => { if (!loading && !['admin','superadmin','teacher'].includes(user?.user_status)) navigate('/'); }, [user, loading]);
 
   const fetchQueue = useCallback(async () => {
     setFetching(true);
@@ -93,6 +94,11 @@ export default function Admin() {
             <p style={{color:'var(--text-muted)',fontSize:12,marginTop:4,fontFamily:'var(--font-mono)'}}>
               Revisione · Utenti · Statistiche
             </p>
+            {isTeacher && (
+              <div style={{display:'flex',alignItems:'center',gap:8,marginTop:8,padding:'6px 12px',background:'rgba(210,153,34,0.06)',border:'1px solid rgba(210,153,34,0.25)',borderRadius:'var(--radius-sm)'}}>
+                <span style={{fontSize:12,color:'var(--warning)'}}>👁 Modalità Teacher — sola lettura, nessuna modifica consentita</span>
+              </div>
+            )}
           </div>
           <button className="btn btn-ghost btn-sm" onClick={()=>tab==='queue'?fetchQueue():tab==='users'?fetchUsers():fetchStats()} disabled={fetching}>
             <RefreshCw size={14} style={fetching?{animation:'spin .7s linear infinite'}:{}}/>
@@ -134,12 +140,12 @@ export default function Admin() {
                         </span>
                       </div>
                       <div style={{display:'flex',gap:6,flexShrink:0}}>
-                        <button className="btn btn-danger btn-sm" onClick={()=>userAction(u.id,'ban','Account non approvato')}>
+                        {isFullAdmin && <button className="btn btn-danger btn-sm" onClick={()=>userAction(u.id,'ban','Account non approvato')}>
                           <XCircle size={13}/>Rifiuta
-                        </button>
-                        <button className="btn btn-success btn-sm" onClick={()=>userAction(u.id,'approve')}>
+                        </button>}
+                        {isFullAdmin && <button className="btn btn-success btn-sm" onClick={()=>userAction(u.id,'approve')}>
                           <CheckCircle size={13}/>Approva
-                        </button>
+                        </button>}
                       </div>
                     </div>
                   </div>
@@ -181,8 +187,8 @@ export default function Admin() {
                     <input className="input" style={{fontSize:13}} placeholder="Nota admin (opzionale)…"
                       value={noteMap[p.id]||''} onChange={e=>setNoteMap(m=>({...m,[p.id]:e.target.value}))}/>
                   </div>
-                  <button className="btn btn-danger btn-sm" onClick={()=>reviewProgram(p.id,'reject')}><XCircle size={14}/>Rifiuta</button>
-                  <button className="btn btn-success btn-sm" onClick={()=>reviewProgram(p.id,'approve')}><CheckCircle size={14}/>Approva</button>
+                  {isFullAdmin && <button className="btn btn-danger btn-sm" onClick={()=>reviewProgram(p.id,'reject')}><XCircle size={14}/>Rifiuta</button>}
+                  {isFullAdmin && <button className="btn btn-success btn-sm" onClick={()=>reviewProgram(p.id,'approve')}><CheckCircle size={14}/>Approva</button>}
                 </div>
               </div>
             ))}
@@ -221,7 +227,7 @@ export default function Admin() {
                           {user.user_status==='superadmin' && <button className="btn btn-ghost btn-sm" style={{color:'var(--accent)',borderColor:'rgba(0,210,255,0.3)'}} onClick={()=>{if(confirm('Promuovi ad admin?')) userAction(u.id,'makeadmin')}}><Shield size={13}/>Admin</button>}
                           <BanBtn u={u} onBan={r=>userAction(u.id,'ban',r)}/>
                         </>}
-                        {u.user_status==='whitelisted' && <>
+                        {u.user_status==='whitelisted' && isFullAdmin && <>
                           <button className="btn btn-ghost btn-sm" onClick={()=>userAction(u.id,'unwhitelist')}><StarOff size={13}/>Rimuovi verifica</button>
                           {user.user_status==='superadmin' && <button className="btn btn-ghost btn-sm" style={{color:'var(--accent)',borderColor:'rgba(0,210,255,0.3)'}} onClick={()=>{if(confirm('Promuovi ad admin?')) userAction(u.id,'makeadmin')}}><Shield size={13}/>Admin</button>}
                           <BanBtn u={u} onBan={r=>userAction(u.id,'ban',r)}/>
@@ -230,6 +236,18 @@ export default function Admin() {
                           <button className="btn btn-ghost btn-sm" onClick={()=>{if(confirm('Rimuovi admin?')) userAction(u.id,'removeadmin')}}><Shield size={13}/>Rimuovi admin</button>
                           <BanBtn u={u} onBan={r=>userAction(u.id,'ban',r)}/>
                         </>}
+                        {user.user_status==='superadmin' && u.user_status==='active' && (
+                          <button className="btn btn-ghost btn-sm" style={{color:'var(--warning)',borderColor:'rgba(210,153,34,0.3)'}} onClick={()=>{if(confirm('Imposta come teacher?')) userAction(u.id,'maketeacher')}}><Shield size={13}/>Teacher</button>
+                        )}
+                        {user.user_status==='superadmin' && u.user_status==='teacher' && (
+                          <button className="btn btn-ghost btn-sm" onClick={()=>userAction(u.id,'removeteacher')}><Shield size={13}/>Rimuovi teacher</button>
+                        )}
+                        {isFullAdmin && (
+                          <button className="btn btn-ghost btn-sm" style={{color:u.is_contributor?'var(--danger)':'#3ecf8e',borderColor:u.is_contributor?'rgba(248,81,73,0.3)':'rgba(62,207,142,0.3)'}}
+                            onClick={()=>userAction(u.id, u.is_contributor?'unsetcontributor':'setcontributor')}>
+                            {u.is_contributor ? <><StarOff size={13}/>Rimuovi contributor</> : <><Star size={13}/>Aggiungi contributor</>}
+                          </button>
+                        )}
                         {u.user_status==='banned' && <button className="btn btn-ghost btn-sm" onClick={()=>userAction(u.id,'unban')}><CheckCircle size={13}/>Riabilita</button>}
                       </div>
                     )}
